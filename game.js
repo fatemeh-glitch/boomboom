@@ -6,12 +6,15 @@ const scoreElement = document.getElementById('scoreValue');
 canvas.width = 800;
 canvas.height = 600;
 
+// Game state
+let gameState = 'playing'; // 'playing', 'gameOver'
+
 // Game objects
 const plane = {
     x: canvas.width / 2,
     y: canvas.height - 100,
-    width: 50,
-    height: 30,
+    width: 60,
+    height: 40,
     speed: 5,
     health: 3,
     maxHealth: 5,
@@ -21,7 +24,9 @@ const plane = {
     bulletSize: 4,
     bulletHeight: 10,
     fireRate: 0,
-    maxFireRate: 10
+    maxFireRate: 10,
+    engineGlow: 0,
+    engineGlowDirection: 1
 };
 
 const bullets = [];
@@ -208,6 +213,8 @@ function createExplosion(x, y, size) {
 }
 
 function updatePlane() {
+    if (gameState !== 'playing') return;
+    
     if (keys.ArrowLeft && plane.x > 0) plane.x -= plane.speed;
     if (keys.ArrowRight && plane.x < canvas.width - plane.width) plane.x += plane.speed;
     if (keys.ArrowUp && plane.y > 0) plane.y -= plane.speed;
@@ -229,6 +236,16 @@ function updatePlane() {
         if (plane.powerUpTime <= 0) {
             plane.isPoweredUp = false;
         }
+    }
+    
+    // Update engine glow animation
+    plane.engineGlow += plane.engineGlowDirection * 0.05;
+    if (plane.engineGlow > 1) {
+        plane.engineGlow = 1;
+        plane.engineGlowDirection = -1;
+    } else if (plane.engineGlow < 0.3) {
+        plane.engineGlow = 0.3;
+        plane.engineGlowDirection = 1;
     }
 }
 
@@ -281,6 +298,8 @@ function updateExplosions() {
 }
 
 function checkCollisions() {
+    if (gameState !== 'playing') return;
+    
     // Check bullet-target collisions
     for (let i = bullets.length - 1; i >= 0; i--) {
         for (let j = targets.length - 1; j >= 0; j--) {
@@ -306,8 +325,7 @@ function checkCollisions() {
             targets.splice(i, 1);
             plane.health--;
             if (plane.health <= 0) {
-                alert('Game Over! Your score: ' + score);
-                location.reload();
+                gameState = 'gameOver';
             }
         }
     }
@@ -334,6 +352,8 @@ function isColliding(rect1, rect2) {
 }
 
 function updateGameDifficulty() {
+    if (gameState !== 'playing') return;
+    
     gameTime++;
     
     // Increase difficulty every 30 seconds
@@ -391,21 +411,62 @@ function drawHealth() {
 }
 
 function drawPlane() {
+    // Draw engine glow
+    const glowSize = 15 + plane.engineGlow * 10;
+    const gradient = ctx.createRadialGradient(
+        plane.x + plane.width/2, plane.y + plane.height + glowSize/2, 0,
+        plane.x + plane.width/2, plane.y + plane.height + glowSize/2, glowSize
+    );
+    
+    if (plane.isPoweredUp) {
+        gradient.addColorStop(0, 'rgba(0, 255, 255, 0.8)');
+        gradient.addColorStop(1, 'rgba(0, 255, 255, 0)');
+    } else {
+        gradient.addColorStop(0, 'rgba(255, 200, 0, 0.8)');
+        gradient.addColorStop(1, 'rgba(255, 200, 0, 0)');
+    }
+    
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(plane.x + plane.width/2, plane.y + plane.height + glowSize/2, glowSize, 0, Math.PI * 2);
+    ctx.fill();
+    
     // Draw plane body
     ctx.fillStyle = plane.isPoweredUp ? '#00ffff' : '#00ff00';
-    ctx.fillRect(plane.x, plane.y, plane.width, plane.height);
     
-    // Draw plane details
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(plane.x + plane.width/2 - 5, plane.y - 10, 10, 10);
+    // Main body
+    ctx.beginPath();
+    ctx.moveTo(plane.x + plane.width/2, plane.y);
+    ctx.lineTo(plane.x + plane.width, plane.y + plane.height/2);
+    ctx.lineTo(plane.x + plane.width - 10, plane.y + plane.height);
+    ctx.lineTo(plane.x + 10, plane.y + plane.height);
+    ctx.lineTo(plane.x, plane.y + plane.height/2);
+    ctx.closePath();
+    ctx.fill();
     
-    // Draw engine glow when powered up
-    if (plane.isPoweredUp) {
-        ctx.fillStyle = '#00ffff';
-        ctx.beginPath();
-        ctx.arc(plane.x + plane.width/2, plane.y + plane.height + 5, 10, 0, Math.PI * 2);
-        ctx.fill();
-    }
+    // Cockpit
+    ctx.fillStyle = '#88ccff';
+    ctx.beginPath();
+    ctx.ellipse(plane.x + plane.width/2, plane.y + plane.height/3, 8, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Wings
+    ctx.fillStyle = plane.isPoweredUp ? '#00ccff' : '#00cc00';
+    ctx.fillRect(plane.x - 5, plane.y + plane.height/2 - 5, 10, 10);
+    ctx.fillRect(plane.x + plane.width - 5, plane.y + plane.height/2 - 5, 10, 10);
+    
+    // Wing details
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(plane.x - 5, plane.y + plane.height/2 - 5);
+    ctx.lineTo(plane.x - 15, plane.y + plane.height/2 - 15);
+    ctx.stroke();
+    
+    ctx.beginPath();
+    ctx.moveTo(plane.x + plane.width - 5, plane.y + plane.height/2 - 5);
+    ctx.lineTo(plane.x + plane.width + 5, plane.y + plane.height/2 - 15);
+    ctx.stroke();
 }
 
 function drawBullets() {
@@ -473,6 +534,101 @@ function drawExplosions() {
     });
 }
 
+function drawGameOver() {
+    // Semi-transparent overlay
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Game Over text
+    ctx.fillStyle = '#ff0000';
+    ctx.font = 'bold 60px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('GAME OVER', canvas.width/2, canvas.height/2 - 50);
+    
+    // Score text
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '30px Arial';
+    ctx.fillText('Your Score: ' + score, canvas.width/2, canvas.height/2 + 20);
+    
+    // Buttons
+    const buttonWidth = 200;
+    const buttonHeight = 50;
+    const buttonSpacing = 30;
+    const buttonY = canvas.height/2 + 80;
+    
+    // Play Again button
+    ctx.fillStyle = '#00ff00';
+    ctx.fillRect(canvas.width/2 - buttonWidth - buttonSpacing/2, buttonY, buttonWidth, buttonHeight);
+    ctx.fillStyle = '#000000';
+    ctx.font = 'bold 24px Arial';
+    ctx.fillText('Play Again', canvas.width/2 - buttonWidth/2 - buttonSpacing/2, buttonY + 35);
+    
+    // Stop button
+    ctx.fillStyle = '#ff0000';
+    ctx.fillRect(canvas.width/2 + buttonSpacing/2, buttonY, buttonWidth, buttonHeight);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText('Stop', canvas.width/2 + buttonWidth/2 + buttonSpacing/2, buttonY + 35);
+    
+    // Reset text alignment
+    ctx.textAlign = 'left';
+}
+
+// Handle mouse clicks for game over screen
+canvas.addEventListener('click', function(event) {
+    if (gameState === 'gameOver') {
+        const rect = canvas.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        
+        const buttonWidth = 200;
+        const buttonHeight = 50;
+        const buttonSpacing = 30;
+        const buttonY = canvas.height/2 + 80;
+        
+        // Play Again button
+        if (x >= canvas.width/2 - buttonWidth - buttonSpacing/2 && 
+            x <= canvas.width/2 - buttonSpacing/2 && 
+            y >= buttonY && 
+            y <= buttonY + buttonHeight) {
+            resetGame();
+        }
+        
+        // Stop button
+        if (x >= canvas.width/2 + buttonSpacing/2 && 
+            x <= canvas.width/2 + buttonWidth + buttonSpacing/2 && 
+            y >= buttonY && 
+            y <= buttonY + buttonHeight) {
+            // Do nothing, just stay on game over screen
+        }
+    }
+});
+
+function resetGame() {
+    // Reset game state
+    gameState = 'playing';
+    
+    // Reset plane
+    plane.x = canvas.width / 2;
+    plane.y = canvas.height - 100;
+    plane.health = 3;
+    plane.isPoweredUp = false;
+    plane.powerUpTime = 0;
+    
+    // Reset game variables
+    bullets.length = 0;
+    targets.length = 0;
+    powerUps.length = 0;
+    explosions.length = 0;
+    score = 0;
+    level = 1;
+    gameTime = 0;
+    targetSpawnRate = 0.02;
+    targetSpeed = 2;
+    
+    // Update score display
+    scoreElement.textContent = score;
+}
+
 function gameLoop() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
@@ -485,8 +641,11 @@ function gameLoop() {
     updatePowerUps();
     updateExplosions();
     checkCollisions();
-    createTarget();
-    createPowerUp();
+    
+    if (gameState === 'playing') {
+        createTarget();
+        createPowerUp();
+    }
     
     drawPlane();
     drawBullets();
@@ -494,6 +653,10 @@ function gameLoop() {
     drawPowerUps();
     drawExplosions();
     drawHealth();
+    
+    if (gameState === 'gameOver') {
+        drawGameOver();
+    }
     
     requestAnimationFrame(gameLoop);
 }

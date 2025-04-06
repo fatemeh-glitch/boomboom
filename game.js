@@ -148,48 +148,41 @@ function shoot() {
 
 function createTarget() {
     if (Math.random() < targetSpawnRate) {
-        const targetType = Math.random();
-        let target;
+        const size = targetSize;
+        const x = Math.random() * (canvas.width - size);
+        const y = -size;
         
-        if (targetType < 0.7) {
-            // Regular target (70% chance)
-            target = {
-                x: Math.random() * (canvas.width - targetSize),
-                y: 0,
-                width: targetSize,
-                height: targetSize,
-                speed: targetSpeed,
-                health: 1,
-                color: '#ff0000',
-                points: 10
-            };
-        } else if (targetType < 0.9) {
-            // Fast target (20% chance)
-            target = {
-                x: Math.random() * (canvas.width - targetSize/2),
-                y: 0,
-                width: targetSize/2,
-                height: targetSize/2,
-                speed: targetSpeed * 1.5,
-                health: 1,
-                color: '#ff6600',
-                points: 20
-            };
+        // Create different types of enemies
+        const enemyType = Math.random();
+        let color, health, speed;
+        
+        if (enemyType < 0.6) {
+            // Regular enemy (60% chance)
+            color = '#ff0000';
+            health = 1;
+            speed = targetSpeed;
+        } else if (enemyType < 0.85) {
+            // Fast enemy (25% chance)
+            color = '#ff6600';
+            health = 1;
+            speed = targetSpeed * 1.5;
         } else {
-            // Tank target (10% chance)
-            target = {
-                x: Math.random() * (canvas.width - targetSize*1.5),
-                y: 0,
-                width: targetSize*1.5,
-                height: targetSize*1.5,
-                speed: targetSpeed * 0.7,
-                health: 3,
-                color: '#990000',
-                points: 30
-            };
+            // Tank enemy (15% chance)
+            color = '#990000';
+            health = 3;
+            speed = targetSpeed * 0.7;
         }
         
-        targets.push(target);
+        targets.push({
+            x: x,
+            y: y,
+            width: size,
+            height: size,
+            size: size,
+            color: color,
+            health: health,
+            speed: speed
+        });
     }
 }
 
@@ -320,9 +313,7 @@ function updateExplosions() {
 }
 
 function checkCollisions() {
-    if (gameState !== 'playing') return;
-    
-    // Check bullet-target collisions
+    // Check bullet collisions with targets
     for (let i = bullets.length - 1; i >= 0; i--) {
         for (let j = targets.length - 1; j >= 0; j--) {
             if (isColliding(bullets[i], targets[j])) {
@@ -330,8 +321,15 @@ function checkCollisions() {
                 targets[j].health--;
                 
                 if (targets[j].health <= 0) {
-                    createExplosion(targets[j].x, targets[j].y, targets[j].width);
-                    score += targets[j].points;
+                    createExplosion(targets[j].x, targets[j].y, targets[j].size);
+                    // Score based on enemy type
+                    if (targets[j].color === '#ff6600') {
+                        score += 20; // Fast enemy
+                    } else if (targets[j].color === '#990000') {
+                        score += 30; // Tank enemy
+                    } else {
+                        score += 10; // Regular enemy
+                    }
                     scoreElement.textContent = score;
                     targets.splice(j, 1);
                 }
@@ -339,20 +337,21 @@ function checkCollisions() {
             }
         }
     }
-
-    // Check plane-target collisions
+    
+    // Check plane collisions with targets
     for (let i = targets.length - 1; i >= 0; i--) {
         if (isColliding(plane, targets[i])) {
-            createExplosion(targets[i].x, targets[i].y, targets[i].width);
+            createExplosion(targets[i].x, targets[i].y, targets[i].size);
             targets.splice(i, 1);
             plane.health--;
+            
             if (plane.health <= 0) {
                 gameState = 'gameOver';
             }
         }
     }
     
-    // Check plane-powerUp collisions
+    // Check plane collisions with power-ups
     for (let i = powerUps.length - 1; i >= 0; i--) {
         if (isColliding(plane, powerUps[i])) {
             if (powerUps[i].effect === 'health') {
@@ -409,26 +408,73 @@ function drawBackground() {
 }
 
 function drawHealth() {
-    const heartSize = 20;
-    const spacing = 30;
-    const startX = canvas.width - 150;
-    const startY = 20;
-
-    for (let i = 0; i < plane.health; i++) {
-        ctx.fillStyle = '#FF0000';
+    const heartSize = 25;
+    const heartSpacing = 30;
+    const heartX = 20; // Position hearts on the left side
+    
+    for (let i = 0; i < plane.maxHealth; i++) {
+        const heartY = 30 + (i * heartSpacing);
+        
+        // Draw heart outline
+        ctx.strokeStyle = '#ff0000';
+        ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.moveTo(startX + i * spacing, startY);
+        ctx.moveTo(heartX + heartSize/2, heartY + heartSize/4);
         ctx.bezierCurveTo(
-            startX + i * spacing - heartSize/2, startY - heartSize/2,
-            startX + i * spacing - heartSize, startY + heartSize/3,
-            startX + i * spacing, startY + heartSize
+            heartX + heartSize/2, heartY, 
+            heartX + heartSize, heartY, 
+            heartX + heartSize, heartY + heartSize/4
         );
         ctx.bezierCurveTo(
-            startX + i * spacing + heartSize, startY + heartSize/3,
-            startX + i * spacing + heartSize/2, startY - heartSize/2,
-            startX + i * spacing, startY
+            heartX + heartSize, heartY + heartSize/2, 
+            heartX + heartSize/2, heartY + heartSize, 
+            heartX + heartSize/2, heartY + heartSize
         );
-        ctx.fill();
+        ctx.bezierCurveTo(
+            heartX + heartSize/2, heartY + heartSize, 
+            heartX, heartY + heartSize/2, 
+            heartX, heartY + heartSize/4
+        );
+        ctx.bezierCurveTo(
+            heartX, heartY, 
+            heartX + heartSize/2, heartY, 
+            heartX + heartSize/2, heartY + heartSize/4
+        );
+        ctx.stroke();
+        
+        // Fill heart if health is available
+        if (i < plane.health) {
+            ctx.fillStyle = '#ff0000';
+            ctx.beginPath();
+            ctx.moveTo(heartX + heartSize/2, heartY + heartSize/4);
+            ctx.bezierCurveTo(
+                heartX + heartSize/2, heartY, 
+                heartX + heartSize, heartY, 
+                heartX + heartSize, heartY + heartSize/4
+            );
+            ctx.bezierCurveTo(
+                heartX + heartSize, heartY + heartSize/2, 
+                heartX + heartSize/2, heartY + heartSize, 
+                heartX + heartSize/2, heartY + heartSize
+            );
+            ctx.bezierCurveTo(
+                heartX + heartSize/2, heartY + heartSize, 
+                heartX, heartY + heartSize/2, 
+                heartX, heartY + heartSize/4
+            );
+            ctx.bezierCurveTo(
+                heartX, heartY, 
+                heartX + heartSize/2, heartY, 
+                heartX + heartSize/2, heartY + heartSize/4
+            );
+            ctx.fill();
+            
+            // Add glow effect
+            ctx.shadowColor = '#ff0000';
+            ctx.shadowBlur = 10;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        }
     }
 }
 
@@ -500,21 +546,50 @@ function drawBullets() {
 
 function drawTargets() {
     targets.forEach(target => {
-        ctx.fillStyle = target.color;
-        ctx.fillRect(target.x, target.y, target.width, target.height);
+        // Create a more interesting enemy shape
+        ctx.save();
         
-        // Draw health bars for tanks
-        if (target.health > 1) {
-            const healthBarWidth = target.width;
-            const healthBarHeight = 5;
-            const healthPercentage = target.health / 3;
-            
-            ctx.fillStyle = '#000000';
-            ctx.fillRect(target.x, target.y - 10, healthBarWidth, healthBarHeight);
-            
-            ctx.fillStyle = '#00ff00';
-            ctx.fillRect(target.x, target.y - 10, healthBarWidth * healthPercentage, healthBarHeight);
-        }
+        // Add glow effect
+        ctx.shadowColor = '#ff0000';
+        ctx.shadowBlur = 15;
+        
+        // Draw enemy body
+        ctx.fillStyle = target.color;
+        
+        // Draw a more complex shape - a hexagonal enemy with details
+        ctx.beginPath();
+        ctx.moveTo(target.x + target.size/2, target.y);
+        ctx.lineTo(target.x + target.size, target.y + target.size/3);
+        ctx.lineTo(target.x + target.size, target.y + target.size*2/3);
+        ctx.lineTo(target.x + target.size/2, target.y + target.size);
+        ctx.lineTo(target.x, target.y + target.size*2/3);
+        ctx.lineTo(target.x, target.y + target.size/3);
+        ctx.closePath();
+        ctx.fill();
+        
+        // Add inner details
+        ctx.fillStyle = '#ff3333';
+        ctx.beginPath();
+        ctx.moveTo(target.x + target.size/2, target.y + target.size/4);
+        ctx.lineTo(target.x + target.size*3/4, target.y + target.size/2);
+        ctx.lineTo(target.x + target.size/2, target.y + target.size*3/4);
+        ctx.lineTo(target.x + target.size/4, target.y + target.size/2);
+        ctx.closePath();
+        ctx.fill();
+        
+        // Add "eye" in the center
+        ctx.fillStyle = '#ffff00';
+        ctx.beginPath();
+        ctx.arc(target.x + target.size/2, target.y + target.size/2, target.size/6, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Add pupil
+        ctx.fillStyle = '#000000';
+        ctx.beginPath();
+        ctx.arc(target.x + target.size/2, target.y + target.size/2, target.size/12, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.restore();
     });
 }
 

@@ -55,10 +55,10 @@ function createStars() {
 
 // Game state
 const keys = {
-    ArrowLeft: false,
-    ArrowRight: false,
-    ArrowUp: false,
-    ArrowDown: false,
+    KeyW: false,
+    KeyA: false,
+    KeyS: false,
+    KeyD: false,
     Space: false
 };
 
@@ -215,10 +215,10 @@ function createExplosion(x, y, size) {
 function updatePlane() {
     if (gameState !== 'playing') return;
     
-    if (keys.ArrowLeft && plane.x > 0) plane.x -= plane.speed;
-    if (keys.ArrowRight && plane.x < canvas.width - plane.width) plane.x += plane.speed;
-    if (keys.ArrowUp && plane.y > 0) plane.y -= plane.speed;
-    if (keys.ArrowDown && plane.y < canvas.height - plane.height) plane.y += plane.speed;
+    if (keys.KeyA && plane.x > 0) plane.x -= plane.speed;
+    if (keys.KeyD && plane.x < canvas.width - plane.width) plane.x += plane.speed;
+    if (keys.KeyW && plane.y > 0) plane.y -= plane.speed;
+    if (keys.KeyS && plane.y < canvas.height - plane.height) plane.y += plane.speed;
     
     // Auto-shooting when space is held
     if (keys.Space) {

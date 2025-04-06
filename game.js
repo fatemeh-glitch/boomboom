@@ -7,7 +7,7 @@ canvas.width = 800;
 canvas.height = 600;
 
 // Game state
-let gameState = 'playing'; // 'playing', 'gameOver'
+let gameState = 'playing'; // 'playing', 'gameOver', 'paused'
 
 // Game objects
 const plane = {
@@ -64,17 +64,39 @@ const keys = {
 
 // Event listeners
 document.addEventListener('keydown', (e) => {
-    if (e.code in keys) {
-        keys[e.code] = true;
-        if (e.code === 'Space') {
-            keys.Space = true;
-        }
-    }
+    console.log('Key pressed:', e.code); // Debug log
+    
+    // Handle WASD keys
+    if (e.code === 'KeyW') keys.KeyW = true;
+    if (e.code === 'KeyA') keys.KeyA = true;
+    if (e.code === 'KeyS') keys.KeyS = true;
+    if (e.code === 'KeyD') keys.KeyD = true;
+    if (e.code === 'Space') keys.Space = true;
 });
 
 document.addEventListener('keyup', (e) => {
-    if (e.code in keys) {
-        keys[e.code] = false;
+    // Handle WASD keys
+    if (e.code === 'KeyW') keys.KeyW = false;
+    if (e.code === 'KeyA') keys.KeyA = false;
+    if (e.code === 'KeyS') keys.KeyS = false;
+    if (e.code === 'KeyD') keys.KeyD = false;
+    if (e.code === 'Space') keys.Space = false;
+});
+
+// Add pause button
+const pauseButton = document.createElement('button');
+pauseButton.textContent = 'Pause';
+pauseButton.className = 'pause-button';
+document.querySelector('.game-container').appendChild(pauseButton);
+
+// Pause button event listener
+pauseButton.addEventListener('click', () => {
+    if (gameState === 'playing') {
+        gameState = 'paused';
+        pauseButton.textContent = 'Resume';
+    } else if (gameState === 'paused') {
+        gameState = 'playing';
+        pauseButton.textContent = 'Pause';
     }
 });
 
@@ -573,6 +595,25 @@ function drawGameOver() {
     ctx.textAlign = 'left';
 }
 
+function drawPauseScreen() {
+    // Semi-transparent overlay
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Pause text
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 60px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('PAUSED', canvas.width/2, canvas.height/2 - 50);
+    
+    // Instructions
+    ctx.font = '24px Arial';
+    ctx.fillText('Press Resume to continue', canvas.width/2, canvas.height/2 + 20);
+    
+    // Reset text alignment
+    ctx.textAlign = 'left';
+}
+
 // Handle mouse clicks for game over screen
 canvas.addEventListener('click', function(event) {
     if (gameState === 'gameOver') {
@@ -632,21 +673,23 @@ function resetGame() {
 function gameLoop() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    updateGameDifficulty();
-    drawBackground();
-    updateStars();
-    updatePlane();
-    updateBullets();
-    updateTargets();
-    updatePowerUps();
-    updateExplosions();
-    checkCollisions();
-    
     if (gameState === 'playing') {
+        updateGameDifficulty();
+        updateStars();
+        updatePlane();
+        updateBullets();
+        updateTargets();
+        updatePowerUps();
+        updateExplosions();
+        checkCollisions();
+        
         createTarget();
         createPowerUp();
+    } else if (gameState === 'paused') {
+        updateStars(); // Keep stars moving even when paused
     }
     
+    drawBackground();
     drawPlane();
     drawBullets();
     drawTargets();
@@ -656,6 +699,8 @@ function gameLoop() {
     
     if (gameState === 'gameOver') {
         drawGameOver();
+    } else if (gameState === 'paused') {
+        drawPauseScreen();
     }
     
     requestAnimationFrame(gameLoop);

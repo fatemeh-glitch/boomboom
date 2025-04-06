@@ -26,7 +26,9 @@ const plane = {
     fireRate: 0,
     maxFireRate: 10,
     engineGlow: 0,
-    engineGlowDirection: 1
+    engineGlowDirection: 1,
+    isExploding: false,
+    explosionTime: 0
 };
 
 const bullets = [];
@@ -230,6 +232,21 @@ function createExplosion(x, y, size) {
 function updatePlane() {
     if (gameState !== 'playing') return;
     
+    if (plane.isExploding) {
+        plane.explosionTime--;
+        
+        // Add more explosion particles during the explosion
+        if (plane.explosionTime % 5 === 0) {
+            createPlaneExplosion();
+        }
+        
+        // When explosion is complete, show game over
+        if (plane.explosionTime <= 0) {
+            gameState = 'gameOver';
+        }
+        return;
+    }
+    
     if (keys.KeyA && plane.x > 0) plane.x -= plane.speed;
     if (keys.KeyD && plane.x < canvas.width - plane.width) plane.x += plane.speed;
     if (keys.KeyW && plane.y > 0) plane.y -= plane.speed;
@@ -346,7 +363,9 @@ function checkCollisions() {
             plane.health--;
             
             if (plane.health <= 0) {
-                gameState = 'gameOver';
+                plane.isExploding = true;
+                plane.explosionTime = 60; // 1 second at 60fps
+                createPlaneExplosion();
             }
         }
     }
@@ -497,6 +516,9 @@ function drawHealth() {
 }
 
 function drawPlane() {
+    // Don't draw the plane if it's exploding
+    if (plane.isExploding) return;
+    
     // Draw engine glow with pulsing effect
     const glowSize = 20 + plane.engineGlow * 15;
     const gradient = ctx.createRadialGradient(
@@ -829,6 +851,8 @@ function resetGame() {
     plane.health = 3;
     plane.isPoweredUp = false;
     plane.powerUpTime = 0;
+    plane.isExploding = false;
+    plane.explosionTime = 0;
     
     // Reset game variables
     bullets.length = 0;
@@ -843,6 +867,47 @@ function resetGame() {
     
     // Update score display
     scoreElement.textContent = score;
+}
+
+function createPlaneExplosion() {
+    // Create a large central explosion
+    for (let i = 0; i < 30; i++) {
+        explosions.push({
+            x: plane.x + plane.width/2,
+            y: plane.y + plane.height/2,
+            size: Math.random() * 10 + 5,
+            speedX: (Math.random() - 0.5) * 10,
+            speedY: (Math.random() - 0.5) * 10,
+            life: 60,
+            color: '#ff6600'
+        });
+    }
+    
+    // Create debris pieces
+    for (let i = 0; i < 20; i++) {
+        explosions.push({
+            x: plane.x + Math.random() * plane.width,
+            y: plane.y + Math.random() * plane.height,
+            size: Math.random() * 5 + 2,
+            speedX: (Math.random() - 0.5) * 15,
+            speedY: (Math.random() - 0.5) * 15,
+            life: 90,
+            color: plane.isPoweredUp ? '#00ffff' : '#00ff00'
+        });
+    }
+    
+    // Create engine explosion
+    for (let i = 0; i < 15; i++) {
+        explosions.push({
+            x: plane.x + plane.width/2,
+            y: plane.y + plane.height,
+            size: Math.random() * 8 + 3,
+            speedX: (Math.random() - 0.5) * 8,
+            speedY: Math.random() * 10 + 5,
+            life: 45,
+            color: '#ffff00'
+        });
+    }
 }
 
 function gameLoop() {

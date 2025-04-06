@@ -13,13 +13,28 @@ const plane = {
     width: 50,
     height: 30,
     speed: 5,
-    health: 3
+    health: 3,
+    maxHealth: 5,
+    powerUpTime: 0,
+    isPoweredUp: false,
+    bulletSpeed: 7,
+    bulletSize: 4,
+    bulletHeight: 10,
+    fireRate: 0,
+    maxFireRate: 10
 };
 
 const bullets = [];
 const targets = [];
 const stars = [];
+const powerUps = [];
+const explosions = [];
 let score = 0;
+let level = 1;
+let gameTime = 0;
+let targetSpawnRate = 0.02;
+let targetSpeed = 2;
+let targetSize = 30;
 
 // Create stars for background
 function createStars() {
@@ -47,7 +62,7 @@ document.addEventListener('keydown', (e) => {
     if (e.code in keys) {
         keys[e.code] = true;
         if (e.code === 'Space') {
-            shoot();
+            keys.Space = true;
         }
     }
 });
@@ -60,23 +75,134 @@ document.addEventListener('keyup', (e) => {
 
 // Game functions
 function shoot() {
-    bullets.push({
-        x: plane.x + plane.width / 2,
-        y: plane.y,
-        width: 4,
-        height: 10,
-        speed: 7
-    });
+    if (plane.fireRate <= 0) {
+        if (plane.isPoweredUp) {
+            // Triple shot when powered up
+            bullets.push(
+                {
+                    x: plane.x + plane.width / 2,
+                    y: plane.y,
+                    width: plane.bulletSize,
+                    height: plane.bulletHeight,
+                    speed: plane.bulletSpeed,
+                    color: '#00ffff'
+                },
+                {
+                    x: plane.x + 10,
+                    y: plane.y,
+                    width: plane.bulletSize,
+                    height: plane.bulletHeight,
+                    speed: plane.bulletSpeed,
+                    color: '#00ffff'
+                },
+                {
+                    x: plane.x + plane.width - 10,
+                    y: plane.y,
+                    width: plane.bulletSize,
+                    height: plane.bulletHeight,
+                    speed: plane.bulletSpeed,
+                    color: '#00ffff'
+                }
+            );
+        } else {
+            // Normal shot
+            bullets.push({
+                x: plane.x + plane.width / 2,
+                y: plane.y,
+                width: plane.bulletSize,
+                height: plane.bulletHeight,
+                speed: plane.bulletSpeed,
+                color: '#fff'
+            });
+        }
+        plane.fireRate = plane.maxFireRate;
+    }
 }
 
 function createTarget() {
-    if (Math.random() < 0.02) {
-        targets.push({
-            x: Math.random() * (canvas.width - 30),
+    if (Math.random() < targetSpawnRate) {
+        const targetType = Math.random();
+        let target;
+        
+        if (targetType < 0.7) {
+            // Regular target (70% chance)
+            target = {
+                x: Math.random() * (canvas.width - targetSize),
+                y: 0,
+                width: targetSize,
+                height: targetSize,
+                speed: targetSpeed,
+                health: 1,
+                color: '#ff0000',
+                points: 10
+            };
+        } else if (targetType < 0.9) {
+            // Fast target (20% chance)
+            target = {
+                x: Math.random() * (canvas.width - targetSize/2),
+                y: 0,
+                width: targetSize/2,
+                height: targetSize/2,
+                speed: targetSpeed * 1.5,
+                health: 1,
+                color: '#ff6600',
+                points: 20
+            };
+        } else {
+            // Tank target (10% chance)
+            target = {
+                x: Math.random() * (canvas.width - targetSize*1.5),
+                y: 0,
+                width: targetSize*1.5,
+                height: targetSize*1.5,
+                speed: targetSpeed * 0.7,
+                health: 3,
+                color: '#990000',
+                points: 30
+            };
+        }
+        
+        targets.push(target);
+    }
+}
+
+function createPowerUp() {
+    if (Math.random() < 0.005) {
+        const powerUpType = Math.random();
+        let color, effect;
+        
+        if (powerUpType < 0.5) {
+            // Health power-up
+            color = '#00ff00';
+            effect = 'health';
+        } else {
+            // Weapon power-up
+            color = '#00ffff';
+            effect = 'weapon';
+        }
+        
+        powerUps.push({
+            x: Math.random() * (canvas.width - 20),
             y: 0,
-            width: 30,
-            height: 30,
-            speed: 2
+            width: 20,
+            height: 20,
+            speed: 2,
+            color: color,
+            effect: effect
+        });
+    }
+}
+
+function createExplosion(x, y, size) {
+    for (let i = 0; i < 10; i++) {
+        explosions.push({
+            x: x + size/2,
+            y: y + size/2,
+            size: Math.random() * 5 + 2,
+            speedX: (Math.random() - 0.5) * 5,
+            speedY: (Math.random() - 0.5) * 5,
+            life: 20,
+            color: '#ff6600'
         });
     }
 }
@@ -86,6 +212,24 @@ function updatePlane() {
     if (keys.ArrowRight && plane.x < canvas.width - plane.width) plane.x += plane.speed;
     if (keys.ArrowUp && plane.y > 0) plane.y -= plane.speed;
     if (keys.ArrowDown && plane.y < canvas.height - plane.height) plane.y += plane.speed;
+    
+    // Auto-shooting when space is held
+    if (keys.Space) {
+        shoot();
+    }
+    
+    // Update fire rate
+    if (plane.fireRate > 0) {
+        plane.fireRate--;
+    }
+    
+    // Update power-up timer
+    if (plane.isPoweredUp) {
+        plane.powerUpTime--;
+        if (plane.powerUpTime <= 0) {
+            plane.isPoweredUp = false;
+        }
+    }
 }
 
 function updateStars() {
@@ -116,15 +260,40 @@ function updateTargets() {
     }
 }
 
+function updatePowerUps() {
+    for (let i = powerUps.length - 1; i >= 0; i--) {
+        powerUps[i].y += powerUps[i].speed;
+        if (powerUps[i].y > canvas.height) {
+            powerUps.splice(i, 1);
+        }
+    }
+}
+
+function updateExplosions() {
+    for (let i = explosions.length - 1; i >= 0; i--) {
+        explosions[i].x += explosions[i].speedX;
+        explosions[i].y += explosions[i].speedY;
+        explosions[i].life--;
+        if (explosions[i].life <= 0) {
+            explosions.splice(i, 1);
+        }
+    }
+}
+
 function checkCollisions() {
     // Check bullet-target collisions
     for (let i = bullets.length - 1; i >= 0; i--) {
         for (let j = targets.length - 1; j >= 0; j--) {
             if (isColliding(bullets[i], targets[j])) {
                 bullets.splice(i, 1);
-                targets.splice(j, 1);
-                score += 10;
-                scoreElement.textContent = score;
+                targets[j].health--;
+                
+                if (targets[j].health <= 0) {
+                    createExplosion(targets[j].x, targets[j].y, targets[j].width);
+                    score += targets[j].points;
+                    scoreElement.textContent = score;
+                    targets.splice(j, 1);
+                }
                 break;
             }
         }
@@ -133,12 +302,26 @@ function checkCollisions() {
     // Check plane-target collisions
     for (let i = targets.length - 1; i >= 0; i--) {
         if (isColliding(plane, targets[i])) {
+            createExplosion(targets[i].x, targets[i].y, targets[i].width);
             targets.splice(i, 1);
             plane.health--;
             if (plane.health <= 0) {
                 alert('Game Over! Your score: ' + score);
                 location.reload();
             }
+        }
+    }
+    
+    // Check plane-powerUp collisions
+    for (let i = powerUps.length - 1; i >= 0; i--) {
+        if (isColliding(plane, powerUps[i])) {
+            if (powerUps[i].effect === 'health') {
+                plane.health = Math.min(plane.health + 1, plane.maxHealth);
+            } else if (powerUps[i].effect === 'weapon') {
+                plane.isPoweredUp = true;
+                plane.powerUpTime = 300; // 5 seconds at 60fps
+            }
+            powerUps.splice(i, 1);
         }
     }
 }
@@ -148,6 +331,21 @@ function isColliding(rect1, rect2) {
            rect1.x + rect1.width > rect2.x &&
            rect1.y < rect2.y + rect2.height &&
            rect1.y + rect1.height > rect2.y;
+}
+
+function updateGameDifficulty() {
+    gameTime++;
+    
+    // Increase difficulty every 30 seconds
+    if (gameTime % 1800 === 0) {
+        level++;
+        targetSpawnRate += 0.005;
+        targetSpeed += 0.2;
+        
+        // Cap the difficulty
+        if (targetSpawnRate > 0.05) targetSpawnRate = 0.05;
+        if (targetSpeed > 5) targetSpeed = 5;
+    }
 }
 
 function drawBackground() {
@@ -161,6 +359,11 @@ function drawBackground() {
         ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
         ctx.fill();
     });
+    
+    // Draw level indicator
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '20px Arial';
+    ctx.fillText('Level: ' + level, canvas.width - 150, 50);
 }
 
 function drawHealth() {
@@ -188,38 +391,108 @@ function drawHealth() {
 }
 
 function drawPlane() {
-    ctx.fillStyle = '#00ff00';
+    // Draw plane body
+    ctx.fillStyle = plane.isPoweredUp ? '#00ffff' : '#00ff00';
     ctx.fillRect(plane.x, plane.y, plane.width, plane.height);
+    
+    // Draw plane details
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(plane.x + plane.width/2 - 5, plane.y - 10, 10, 10);
+    
+    // Draw engine glow when powered up
+    if (plane.isPoweredUp) {
+        ctx.fillStyle = '#00ffff';
+        ctx.beginPath();
+        ctx.arc(plane.x + plane.width/2, plane.y + plane.height + 5, 10, 0, Math.PI * 2);
+        ctx.fill();
+    }
 }
 
 function drawBullets() {
-    ctx.fillStyle = '#fff';
     bullets.forEach(bullet => {
+        ctx.fillStyle = bullet.color;
         ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
     });
 }
 
 function drawTargets() {
-    ctx.fillStyle = '#ff0000';
     targets.forEach(target => {
+        ctx.fillStyle = target.color;
         ctx.fillRect(target.x, target.y, target.width, target.height);
+        
+        // Draw health bars for tanks
+        if (target.health > 1) {
+            const healthBarWidth = target.width;
+            const healthBarHeight = 5;
+            const healthPercentage = target.health / 3;
+            
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(target.x, target.y - 10, healthBarWidth, healthBarHeight);
+            
+            ctx.fillStyle = '#00ff00';
+            ctx.fillRect(target.x, target.y - 10, healthBarWidth * healthPercentage, healthBarHeight);
+        }
+    });
+}
+
+function drawPowerUps() {
+    powerUps.forEach(powerUp => {
+        ctx.fillStyle = powerUp.color;
+        ctx.beginPath();
+        ctx.arc(powerUp.x + powerUp.width/2, powerUp.y + powerUp.height/2, powerUp.width/2, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Draw icon based on power-up type
+        ctx.fillStyle = '#FFFFFF';
+        if (powerUp.effect === 'health') {
+            // Plus sign for health
+            ctx.fillRect(powerUp.x + powerUp.width/2 - 2, powerUp.y + 5, 4, 10);
+            ctx.fillRect(powerUp.x + 5, powerUp.y + powerUp.height/2 - 2, 10, 4);
+        } else {
+            // Star for weapon
+            ctx.beginPath();
+            ctx.moveTo(powerUp.x + powerUp.width/2, powerUp.y + 5);
+            ctx.lineTo(powerUp.x + powerUp.width - 5, powerUp.y + powerUp.height - 5);
+            ctx.lineTo(powerUp.x + 5, powerUp.y + powerUp.height/2);
+            ctx.lineTo(powerUp.x + powerUp.width - 5, powerUp.y + 5);
+            ctx.lineTo(powerUp.x + 5, powerUp.y + powerUp.height - 5);
+            ctx.closePath();
+            ctx.fill();
+        }
+    });
+}
+
+function drawExplosions() {
+    explosions.forEach(explosion => {
+        ctx.fillStyle = explosion.color;
+        ctx.globalAlpha = explosion.life / 20;
+        ctx.beginPath();
+        ctx.arc(explosion.x, explosion.y, explosion.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
     });
 }
 
 function gameLoop() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
+    updateGameDifficulty();
     drawBackground();
     updateStars();
     updatePlane();
     updateBullets();
     updateTargets();
+    updatePowerUps();
+    updateExplosions();
     checkCollisions();
     createTarget();
+    createPowerUp();
     
     drawPlane();
     drawBullets();
     drawTargets();
+    drawPowerUps();
+    drawExplosions();
     drawHealth();
     
     requestAnimationFrame(gameLoop);

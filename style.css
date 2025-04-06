@@ -10,15 +10,26 @@ body {
     align-items: center;
     min-height: 100vh;
     background: #000;
-    font-family: Arial, sans-serif;
+    font-family: 'Arial', sans-serif;
     overflow: hidden;
+    color: #fff;
 }
 
 .game-container {
     position: relative;
-    box-shadow: 0 0 20px rgba(0, 0, 255, 0.3);
+    box-shadow: 0 0 30px rgba(0, 100, 255, 0.5);
     border-radius: 10px;
     overflow: hidden;
+    animation: glow 2s infinite alternate;
+}
+
+@keyframes glow {
+    from {
+        box-shadow: 0 0 20px rgba(0, 100, 255, 0.5);
+    }
+    to {
+        box-shadow: 0 0 40px rgba(0, 200, 255, 0.8);
+    }
 }
 
 canvas {
@@ -35,6 +46,10 @@ canvas {
     font-size: 24px;
     font-weight: bold;
     text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+    background: rgba(0, 0, 0, 0.5);
+    padding: 5px 10px;
+    border-radius: 5px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .controls {
@@ -49,4 +64,16 @@ canvas {
     border-radius: 5px;
     border: 1px solid rgba(255, 255, 255, 0.2);
     text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+    width: 80%;
+    max-width: 600px;
+}
+
+.controls p {
+    margin: 5px 0;
+}
+
+.power-ups {
+    font-size: 14px;
+    color: #00ffff;
+    margin-top: 10px !important;
 } 

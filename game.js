@@ -38,7 +38,7 @@ let score = 0;
 let level = 1;
 let gameTime = 0;
 let targetSpawnRate = 0.02;
-let targetSpeed = 2;
+let targetSpeed = 3;
 let targetSize = 30;
 
 // Create stars for background
@@ -165,12 +165,12 @@ function createTarget() {
             // Fast enemy (25% chance)
             color = '#ff6600';
             health = 1;
-            speed = targetSpeed * 1.5;
+            speed = targetSpeed * 2.0;
         } else {
             // Tank enemy (15% chance)
             color = '#990000';
             health = 3;
-            speed = targetSpeed * 0.7;
+            speed = targetSpeed * 0.8;
         }
         
         targets.push({
@@ -375,14 +375,14 @@ function isColliding(rect1, rect2) {
 function updateGameDifficulty() {
     gameTime++;
     
-    // Increase difficulty every 20 seconds (reduced from 30)
-    if (gameTime % 1200 === 0) {
+    // Increase difficulty every 15 seconds (reduced from 20)
+    if (gameTime % 900 === 0) {
         level++;
         
         // More aggressive speed increases
-        targetSpawnRate += 0.01; // Doubled from 0.005
-        targetSpeed += 1.0; // Doubled from 0.5
-        plane.speed += 0.3; // Increased from 0.2
+        targetSpawnRate += 0.015; // Increased from 0.01
+        targetSpeed += 1.5; // Increased from 1.0
+        plane.speed += 0.4; // Increased from 0.3
         
         // Show level up message with more visual impact
         ctx.fillStyle = '#00ffff';
@@ -740,7 +740,7 @@ function resetGame() {
     level = 1;
     gameTime = 0;
     targetSpawnRate = 0.02;
-    targetSpeed = 2;
+    targetSpeed = 3;
     
     // Update score display
     scoreElement.textContent = score;

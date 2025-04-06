@@ -375,18 +375,34 @@ function isColliding(rect1, rect2) {
 function updateGameDifficulty() {
     gameTime++;
     
-    // Increase difficulty every 30 seconds
-    if (gameTime % 1800 === 0) {
+    // Increase difficulty every 20 seconds (reduced from 30)
+    if (gameTime % 1200 === 0) {
         level++;
-        targetSpawnRate += 0.005;
-        targetSpeed += 0.5;
-        plane.speed += 0.2; // Increase player speed too
         
-        // Show level up message
-        ctx.fillStyle = '#00ff00';
-        ctx.font = 'bold 30px Arial';
+        // More aggressive speed increases
+        targetSpawnRate += 0.01; // Doubled from 0.005
+        targetSpeed += 1.0; // Doubled from 0.5
+        plane.speed += 0.3; // Increased from 0.2
+        
+        // Show level up message with more visual impact
+        ctx.fillStyle = '#00ffff';
+        ctx.font = 'bold 40px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText(`Level ${level}!`, canvas.width/2, canvas.height/2);
+        ctx.fillText(`LEVEL ${level}!`, canvas.width/2, canvas.height/2);
+        
+        // Add a visual effect for level up
+        for (let i = 0; i < 20; i++) {
+            explosions.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                size: Math.random() * 10 + 5,
+                speedX: (Math.random() - 0.5) * 10,
+                speedY: (Math.random() - 0.5) * 10,
+                life: 30,
+                color: '#00ffff'
+            });
+        }
+        
         ctx.textAlign = 'left';
     }
 }

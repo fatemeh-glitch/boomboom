@@ -235,8 +235,8 @@ function updatePlane() {
     if (plane.isExploding) {
         plane.explosionTime--;
         
-        // Add more explosion particles during the explosion
-        if (plane.explosionTime % 5 === 0) {
+        // Add more explosion particles during the explosion, but less frequently
+        if (plane.explosionTime % 10 === 0) {
             createPlaneExplosion();
         }
         
@@ -365,7 +365,7 @@ function checkCollisions() {
             if (plane.health <= 0) {
                 console.log("Plane health reached zero, triggering explosion"); // Debug log
                 plane.isExploding = true;
-                plane.explosionTime = 60; // 1 second at 60fps
+                plane.explosionTime = 30; // Reduced from 60 to 30 (half a second at 60fps)
                 createPlaneExplosion();
             }
         }
@@ -883,41 +883,41 @@ function resetGame() {
 function createPlaneExplosion() {
     console.log("Creating plane explosion!"); // Debug log
     
-    // Create a large central explosion
-    for (let i = 0; i < 50; i++) { // Increased number of particles
+    // Create a central explosion with fewer particles
+    for (let i = 0; i < 20; i++) { // Reduced from 50
         explosions.push({
             x: plane.x + plane.width/2,
             y: plane.y + plane.height/2,
-            size: Math.random() * 20 + 10, // Much larger size
-            speedX: (Math.random() - 0.5) * 15,
-            speedY: (Math.random() - 0.5) * 15,
-            life: 60,
+            size: Math.random() * 12 + 6, // Reduced from 20+10
+            speedX: (Math.random() - 0.5) * 10, // Reduced from 15
+            speedY: (Math.random() - 0.5) * 10, // Reduced from 15
+            life: 30, // Reduced from 60
             color: '#ff6600'
         });
     }
     
-    // Create debris pieces
-    for (let i = 0; i < 30; i++) { // Increased number of particles
+    // Create debris pieces with fewer particles
+    for (let i = 0; i < 15; i++) { // Reduced from 30
         explosions.push({
             x: plane.x + Math.random() * plane.width,
             y: plane.y + Math.random() * plane.height,
-            size: Math.random() * 12 + 6, // Much larger size
-            speedX: (Math.random() - 0.5) * 20,
-            speedY: (Math.random() - 0.5) * 20,
-            life: 90,
+            size: Math.random() * 8 + 4, // Reduced from 12+6
+            speedX: (Math.random() - 0.5) * 12, // Reduced from 20
+            speedY: (Math.random() - 0.5) * 12, // Reduced from 20
+            life: 45, // Reduced from 90
             color: plane.isPoweredUp ? '#00ffff' : '#00ff00'
         });
     }
     
-    // Create engine explosion
-    for (let i = 0; i < 25; i++) { // Increased number of particles
+    // Create engine explosion with fewer particles
+    for (let i = 0; i < 10; i++) { // Reduced from 25
         explosions.push({
             x: plane.x + plane.width/2,
             y: plane.y + plane.height,
-            size: Math.random() * 15 + 8, // Much larger size
-            speedX: (Math.random() - 0.5) * 10,
-            speedY: Math.random() * 15 + 5,
-            life: 45,
+            size: Math.random() * 10 + 5, // Reduced from 15+8
+            speedX: (Math.random() - 0.5) * 8, // Reduced from 10
+            speedY: Math.random() * 10 + 5, // Reduced from 15+5
+            life: 25, // Reduced from 45
             color: '#ffff00'
         });
     }

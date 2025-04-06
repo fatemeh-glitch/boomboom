@@ -12,12 +12,26 @@ const plane = {
     y: canvas.height - 100,
     width: 50,
     height: 30,
-    speed: 5
+    speed: 5,
+    health: 3
 };
 
 const bullets = [];
 const targets = [];
+const stars = [];
 let score = 0;
+
+// Create stars for background
+function createStars() {
+    for (let i = 0; i < 100; i++) {
+        stars.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            size: Math.random() * 2 + 1,
+            speed: Math.random() * 2 + 1
+        });
+    }
+}
 
 // Game state
 const keys = {
@@ -74,6 +88,16 @@ function updatePlane() {
     if (keys.ArrowDown && plane.y < canvas.height - plane.height) plane.y += plane.speed;
 }
 
+function updateStars() {
+    stars.forEach(star => {
+        star.y += star.speed;
+        if (star.y > canvas.height) {
+            star.y = 0;
+            star.x = Math.random() * canvas.width;
+        }
+    });
+}
+
 function updateBullets() {
     for (let i = bullets.length - 1; i >= 0; i--) {
         bullets[i].y -= bullets[i].speed;
@@ -93,6 +117,7 @@ function updateTargets() {
 }
 
 function checkCollisions() {
+    // Check bullet-target collisions
     for (let i = bullets.length - 1; i >= 0; i--) {
         for (let j = targets.length - 1; j >= 0; j--) {
             if (isColliding(bullets[i], targets[j])) {
@@ -104,6 +129,18 @@ function checkCollisions() {
             }
         }
     }
+
+    // Check plane-target collisions
+    for (let i = targets.length - 1; i >= 0; i--) {
+        if (isColliding(plane, targets[i])) {
+            targets.splice(i, 1);
+            plane.health--;
+            if (plane.health <= 0) {
+                alert('Game Over! Your score: ' + score);
+                location.reload();
+            }
+        }
+    }
 }
 
 function isColliding(rect1, rect2) {
@@ -111,6 +148,43 @@ function isColliding(rect1, rect2) {
            rect1.x + rect1.width > rect2.x &&
            rect1.y < rect2.y + rect2.height &&
            rect1.y + rect1.height > rect2.y;
+}
+
+function drawBackground() {
+    ctx.fillStyle = '#000033';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw stars
+    ctx.fillStyle = '#FFFFFF';
+    stars.forEach(star => {
+        ctx.beginPath();
+        ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+        ctx.fill();
+    });
+}
+
+function drawHealth() {
+    const heartSize = 20;
+    const spacing = 30;
+    const startX = canvas.width - 150;
+    const startY = 20;
+
+    for (let i = 0; i < plane.health; i++) {
+        ctx.fillStyle = '#FF0000';
+        ctx.beginPath();
+        ctx.moveTo(startX + i * spacing, startY);
+        ctx.bezierCurveTo(
+            startX + i * spacing - heartSize/2, startY - heartSize/2,
+            startX + i * spacing - heartSize, startY + heartSize/3,
+            startX + i * spacing, startY + heartSize
+        );
+        ctx.bezierCurveTo(
+            startX + i * spacing + heartSize, startY + heartSize/3,
+            startX + i * spacing + heartSize/2, startY - heartSize/2,
+            startX + i * spacing, startY
+        );
+        ctx.fill();
+    }
 }
 
 function drawPlane() {
@@ -135,6 +209,8 @@ function drawTargets() {
 function gameLoop() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
+    drawBackground();
+    updateStars();
     updatePlane();
     updateBullets();
     updateTargets();
@@ -144,9 +220,11 @@ function gameLoop() {
     drawPlane();
     drawBullets();
     drawTargets();
+    drawHealth();
     
     requestAnimationFrame(gameLoop);
 }
 
-// Start the game
+// Initialize stars and start the game
+createStars();
 gameLoop(); 

@@ -9,17 +9,22 @@ body {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    background: #1a1a1a;
+    background: #000;
     font-family: Arial, sans-serif;
+    overflow: hidden;
 }
 
 .game-container {
     position: relative;
+    box-shadow: 0 0 20px rgba(0, 0, 255, 0.3);
+    border-radius: 10px;
+    overflow: hidden;
 }
 
 canvas {
-    background: #000;
+    background: #000033;
     border: 2px solid #333;
+    border-radius: 10px;
 }
 
 .score {
@@ -29,6 +34,7 @@ canvas {
     color: white;
     font-size: 24px;
     font-weight: bold;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
 }
 
 .controls {
@@ -38,7 +44,9 @@ canvas {
     transform: translateX(-50%);
     color: white;
     text-align: center;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.7);
     padding: 10px 20px;
     border-radius: 5px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
 } 

@@ -762,10 +762,18 @@ function drawPowerUps() {
 function drawExplosions() {
     explosions.forEach(explosion => {
         ctx.fillStyle = explosion.color;
-        ctx.globalAlpha = explosion.life / 20;
+        // Increase opacity by using a higher base value and scaling factor
+        ctx.globalAlpha = 0.3 + (explosion.life / 20) * 0.7;
         ctx.beginPath();
         ctx.arc(explosion.x, explosion.y, explosion.size, 0, Math.PI * 2);
         ctx.fill();
+        
+        // Add a glow effect to make explosions more visible
+        ctx.shadowColor = explosion.color;
+        ctx.shadowBlur = 10;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        
         ctx.globalAlpha = 1;
     });
 }
@@ -875,7 +883,7 @@ function createPlaneExplosion() {
         explosions.push({
             x: plane.x + plane.width/2,
             y: plane.y + plane.height/2,
-            size: Math.random() * 10 + 5,
+            size: Math.random() * 15 + 8, // Increased size
             speedX: (Math.random() - 0.5) * 10,
             speedY: (Math.random() - 0.5) * 10,
             life: 60,
@@ -888,7 +896,7 @@ function createPlaneExplosion() {
         explosions.push({
             x: plane.x + Math.random() * plane.width,
             y: plane.y + Math.random() * plane.height,
-            size: Math.random() * 5 + 2,
+            size: Math.random() * 8 + 4, // Increased size
             speedX: (Math.random() - 0.5) * 15,
             speedY: (Math.random() - 0.5) * 15,
             life: 90,
@@ -901,7 +909,7 @@ function createPlaneExplosion() {
         explosions.push({
             x: plane.x + plane.width/2,
             y: plane.y + plane.height,
-            size: Math.random() * 8 + 3,
+            size: Math.random() * 12 + 5, // Increased size
             speedX: (Math.random() - 0.5) * 8,
             speedY: Math.random() * 10 + 5,
             life: 45,

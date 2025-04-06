@@ -225,10 +225,10 @@ function createExplosion(x, y, size) {
         explosions.push({
             x: x + size/2,
             y: y + size/2,
-            size: Math.random() * 5 + 2,
-            speedX: (Math.random() - 0.5) * 5,
-            speedY: (Math.random() - 0.5) * 5,
-            life: 20,
+            size: Math.random() * 3 + 1,
+            speedX: (Math.random() - 0.5) * 3,
+            speedY: (Math.random() - 0.5) * 3,
+            life: 15,
             color: '#ff6600'
         });
     }
@@ -466,15 +466,15 @@ function updateGameDifficulty() {
         ctx.textAlign = 'center';
         ctx.fillText(`LEVEL ${level}!`, canvas.width/2, canvas.height/2);
         
-        // Add a visual effect for level up
-        for (let i = 0; i < 20; i++) {
+        // Add a visual effect for level up - reduced number of explosions
+        for (let i = 0; i < 10; i++) { // Reduced from 20
             explosions.push({
                 x: Math.random() * canvas.width,
                 y: Math.random() * canvas.height,
-                size: Math.random() * 10 + 5,
-                speedX: (Math.random() - 0.5) * 10,
-                speedY: (Math.random() - 0.5) * 10,
-                life: 30,
+                size: Math.random() * 6 + 3, // Reduced from 10+5
+                speedX: (Math.random() - 0.5) * 6, // Reduced from 10
+                speedY: (Math.random() - 0.5) * 6, // Reduced from 10
+                life: 20, // Reduced from 30
                 color: '#00ffff'
             });
         }
@@ -818,18 +818,18 @@ function drawPowerUps() {
 
 function drawExplosions() {
     explosions.forEach(explosion => {
-        // Make explosions much more visible with higher opacity
+        // Make explosions more contained with lower opacity
         ctx.fillStyle = explosion.color;
-        ctx.globalAlpha = 0.8; // Much higher base opacity
+        ctx.globalAlpha = 0.6; // Reduced from 0.8
         
         // Draw the explosion particle
         ctx.beginPath();
         ctx.arc(explosion.x, explosion.y, explosion.size, 0, Math.PI * 2);
         ctx.fill();
         
-        // Add a strong glow effect
+        // Add a more contained glow effect
         ctx.shadowColor = explosion.color;
-        ctx.shadowBlur = 15;
+        ctx.shadowBlur = 8; // Reduced from 15
         ctx.fill();
         ctx.shadowBlur = 0;
         
@@ -944,40 +944,40 @@ function createPlaneExplosion() {
     console.log("Creating plane explosion!"); // Debug log
     
     // Create a central explosion with fewer particles
-    for (let i = 0; i < 20; i++) { // Reduced from 50
+    for (let i = 0; i < 15; i++) { // Reduced from 20
         explosions.push({
             x: plane.x + plane.width/2,
             y: plane.y + plane.height/2,
-            size: Math.random() * 12 + 6, // Reduced from 20+10
-            speedX: (Math.random() - 0.5) * 10, // Reduced from 15
-            speedY: (Math.random() - 0.5) * 10, // Reduced from 15
-            life: 30, // Reduced from 60
+            size: Math.random() * 8 + 4, // Reduced from 12+6
+            speedX: (Math.random() - 0.5) * 6, // Reduced from 10
+            speedY: (Math.random() - 0.5) * 6, // Reduced from 10
+            life: 20, // Reduced from 30
             color: '#ff6600'
         });
     }
     
     // Create debris pieces with fewer particles
-    for (let i = 0; i < 15; i++) { // Reduced from 30
+    for (let i = 0; i < 10; i++) { // Reduced from 15
         explosions.push({
             x: plane.x + Math.random() * plane.width,
             y: plane.y + Math.random() * plane.height,
-            size: Math.random() * 8 + 4, // Reduced from 12+6
-            speedX: (Math.random() - 0.5) * 12, // Reduced from 20
-            speedY: (Math.random() - 0.5) * 12, // Reduced from 20
-            life: 45, // Reduced from 90
+            size: Math.random() * 5 + 3, // Reduced from 8+4
+            speedX: (Math.random() - 0.5) * 8, // Reduced from 12
+            speedY: (Math.random() - 0.5) * 8, // Reduced from 12
+            life: 30, // Reduced from 45
             color: plane.isPoweredUp ? '#00ffff' : '#00ff00'
         });
     }
     
     // Create engine explosion with fewer particles
-    for (let i = 0; i < 10; i++) { // Reduced from 25
+    for (let i = 0; i < 8; i++) { // Reduced from 10
         explosions.push({
             x: plane.x + plane.width/2,
             y: plane.y + plane.height,
-            size: Math.random() * 10 + 5, // Reduced from 15+8
-            speedX: (Math.random() - 0.5) * 8, // Reduced from 10
-            speedY: Math.random() * 10 + 5, // Reduced from 15+5
-            life: 25, // Reduced from 45
+            size: Math.random() * 6 + 3, // Reduced from 10+5
+            speedX: (Math.random() - 0.5) * 5, // Reduced from 8
+            speedY: Math.random() * 6 + 3, // Reduced from 10+5
+            life: 20, // Reduced from 25
             color: '#ffff00'
         });
     }

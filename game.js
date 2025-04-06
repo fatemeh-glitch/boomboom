@@ -497,19 +497,21 @@ function drawHealth() {
 }
 
 function drawPlane() {
-    // Draw engine glow
-    const glowSize = 15 + plane.engineGlow * 10;
+    // Draw engine glow with pulsing effect
+    const glowSize = 20 + plane.engineGlow * 15;
     const gradient = ctx.createRadialGradient(
         plane.x + plane.width/2, plane.y + plane.height + glowSize/2, 0,
         plane.x + plane.width/2, plane.y + plane.height + glowSize/2, glowSize
     );
     
     if (plane.isPoweredUp) {
-        gradient.addColorStop(0, 'rgba(0, 255, 255, 0.8)');
-        gradient.addColorStop(1, 'rgba(0, 255, 255, 0)');
+        gradient.addColorStop(0, 'rgba(0, 255, 255, 0.9)');
+        gradient.addColorStop(0.5, 'rgba(0, 200, 255, 0.5)');
+        gradient.addColorStop(1, 'rgba(0, 150, 255, 0)');
     } else {
-        gradient.addColorStop(0, 'rgba(255, 200, 0, 0.8)');
-        gradient.addColorStop(1, 'rgba(255, 200, 0, 0)');
+        gradient.addColorStop(0, 'rgba(255, 200, 0, 0.9)');
+        gradient.addColorStop(0.5, 'rgba(255, 150, 0, 0.5)');
+        gradient.addColorStop(1, 'rgba(255, 100, 0, 0)');
     }
     
     ctx.fillStyle = gradient;
@@ -517,42 +519,139 @@ function drawPlane() {
     ctx.arc(plane.x + plane.width/2, plane.y + plane.height + glowSize/2, glowSize, 0, Math.PI * 2);
     ctx.fill();
     
-    // Draw plane body
-    ctx.fillStyle = plane.isPoweredUp ? '#00ffff' : '#00ff00';
+    // Add engine exhaust particles
+    for (let i = 0; i < 5; i++) {
+        const particleSize = Math.random() * 3 + 1;
+        const particleX = plane.x + plane.width/2 + (Math.random() - 0.5) * 10;
+        const particleY = plane.y + plane.height + Math.random() * 10;
+        
+        ctx.fillStyle = plane.isPoweredUp ? 'rgba(0, 255, 255, 0.7)' : 'rgba(255, 200, 0, 0.7)';
+        ctx.beginPath();
+        ctx.arc(particleX, particleY, particleSize, 0, Math.PI * 2);
+        ctx.fill();
+    }
     
-    // Main body
+    // Draw plane body with metallic effect
+    const planeColor = plane.isPoweredUp ? '#00ffff' : '#00ff00';
+    const planeShadow = plane.isPoweredUp ? '#0088aa' : '#008800';
+    
+    // Main body with gradient
+    const bodyGradient = ctx.createLinearGradient(
+        plane.x, plane.y, plane.x + plane.width, plane.y + plane.height
+    );
+    bodyGradient.addColorStop(0, planeColor);
+    bodyGradient.addColorStop(0.5, planeShadow);
+    bodyGradient.addColorStop(1, planeColor);
+    
+    ctx.fillStyle = bodyGradient;
+    
+    // Sleek, aerodynamic body
     ctx.beginPath();
     ctx.moveTo(plane.x + plane.width/2, plane.y);
-    ctx.lineTo(plane.x + plane.width, plane.y + plane.height/2);
-    ctx.lineTo(plane.x + plane.width - 10, plane.y + plane.height);
-    ctx.lineTo(plane.x + 10, plane.y + plane.height);
-    ctx.lineTo(plane.x, plane.y + plane.height/2);
+    ctx.lineTo(plane.x + plane.width - 5, plane.y + plane.height/3);
+    ctx.lineTo(plane.x + plane.width - 10, plane.y + plane.height - 5);
+    ctx.lineTo(plane.x + 10, plane.y + plane.height - 5);
+    ctx.lineTo(plane.x + 5, plane.y + plane.height/3);
     ctx.closePath();
     ctx.fill();
     
-    // Cockpit
-    ctx.fillStyle = '#88ccff';
-    ctx.beginPath();
-    ctx.ellipse(plane.x + plane.width/2, plane.y + plane.height/3, 8, 5, 0, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Wings
-    ctx.fillStyle = plane.isPoweredUp ? '#00ccff' : '#00cc00';
-    ctx.fillRect(plane.x - 5, plane.y + plane.height/2 - 5, 10, 10);
-    ctx.fillRect(plane.x + plane.width - 5, plane.y + plane.height/2 - 5, 10, 10);
-    
-    // Wing details
-    ctx.strokeStyle = '#ffffff';
+    // Add metallic highlight
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
     ctx.lineWidth = 2;
     ctx.beginPath();
+    ctx.moveTo(plane.x + plane.width/2, plane.y + 5);
+    ctx.lineTo(plane.x + plane.width - 8, plane.y + plane.height/3 + 5);
+    ctx.lineTo(plane.x + plane.width - 12, plane.y + plane.height - 8);
+    ctx.stroke();
+    
+    // Cockpit with glass effect
+    const cockpitGradient = ctx.createRadialGradient(
+        plane.x + plane.width/2, plane.y + plane.height/3, 0,
+        plane.x + plane.width/2, plane.y + plane.height/3, 10
+    );
+    cockpitGradient.addColorStop(0, 'rgba(100, 200, 255, 0.9)');
+    cockpitGradient.addColorStop(1, 'rgba(50, 150, 255, 0.5)');
+    
+    ctx.fillStyle = cockpitGradient;
+    ctx.beginPath();
+    ctx.ellipse(plane.x + plane.width/2, plane.y + plane.height/3, 10, 6, 0, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Cockpit frame
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.ellipse(plane.x + plane.width/2, plane.y + plane.height/3, 10, 6, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    
+    // Wings with metallic effect
+    const wingGradient = ctx.createLinearGradient(
+        plane.x - 15, plane.y + plane.height/2, plane.x + plane.width + 15, plane.y + plane.height/2
+    );
+    wingGradient.addColorStop(0, planeShadow);
+    wingGradient.addColorStop(0.5, planeColor);
+    wingGradient.addColorStop(1, planeShadow);
+    
+    ctx.fillStyle = wingGradient;
+    
+    // Left wing
+    ctx.beginPath();
     ctx.moveTo(plane.x - 5, plane.y + plane.height/2 - 5);
-    ctx.lineTo(plane.x - 15, plane.y + plane.height/2 - 15);
+    ctx.lineTo(plane.x - 20, plane.y + plane.height/2 - 15);
+    ctx.lineTo(plane.x - 15, plane.y + plane.height/2 + 5);
+    ctx.lineTo(plane.x, plane.y + plane.height/2 + 5);
+    ctx.closePath();
+    ctx.fill();
+    
+    // Right wing
+    ctx.beginPath();
+    ctx.moveTo(plane.x + plane.width - 5, plane.y + plane.height/2 - 5);
+    ctx.lineTo(plane.x + plane.width + 15, plane.y + plane.height/2 - 15);
+    ctx.lineTo(plane.x + plane.width + 10, plane.y + plane.height/2 + 5);
+    ctx.lineTo(plane.x + plane.width, plane.y + plane.height/2 + 5);
+    ctx.closePath();
+    ctx.fill();
+    
+    // Wing details
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+    ctx.lineWidth = 1.5;
+    
+    // Left wing details
+    ctx.beginPath();
+    ctx.moveTo(plane.x - 5, plane.y + plane.height/2 - 5);
+    ctx.lineTo(plane.x - 20, plane.y + plane.height/2 - 15);
     ctx.stroke();
     
     ctx.beginPath();
-    ctx.moveTo(plane.x + plane.width - 5, plane.y + plane.height/2 - 5);
-    ctx.lineTo(plane.x + plane.width + 5, plane.y + plane.height/2 - 15);
+    ctx.moveTo(plane.x - 15, plane.y + plane.height/2 + 5);
+    ctx.lineTo(plane.x - 20, plane.y + plane.height/2 - 15);
     ctx.stroke();
+    
+    // Right wing details
+    ctx.beginPath();
+    ctx.moveTo(plane.x + plane.width - 5, plane.y + plane.height/2 - 5);
+    ctx.lineTo(plane.x + plane.width + 15, plane.y + plane.height/2 - 15);
+    ctx.stroke();
+    
+    ctx.beginPath();
+    ctx.moveTo(plane.x + plane.width + 10, plane.y + plane.height/2 + 5);
+    ctx.lineTo(plane.x + plane.width + 15, plane.y + plane.height/2 - 15);
+    ctx.stroke();
+    
+    // Add weapon glow when powered up
+    if (plane.isPoweredUp) {
+        const weaponGlow = ctx.createRadialGradient(
+            plane.x + plane.width/2, plane.y, 0,
+            plane.x + plane.width/2, plane.y, 15
+        );
+        weaponGlow.addColorStop(0, 'rgba(0, 255, 255, 0.5)');
+        weaponGlow.addColorStop(1, 'rgba(0, 255, 255, 0)');
+        
+        ctx.fillStyle = weaponGlow;
+        ctx.beginPath();
+        ctx.arc(plane.x + plane.width/2, plane.y, 15, 0, Math.PI * 2);
+        ctx.fill();
+    }
 }
 
 function drawBullets() {

@@ -16,6 +16,11 @@ const plane = {
     width: 60,
     height: 40,
     speed: 5,
+    maxSpeed: 8,
+    acceleration: 0.5,
+    deceleration: 0.3,
+    velocityX: 0,
+    velocityY: 0,
     health: 3,
     maxHealth: 5,
     powerUpTime: 0,
@@ -247,10 +252,52 @@ function updatePlane() {
         return;
     }
     
-    if (keys.KeyA && plane.x > 0) plane.x -= plane.speed;
-    if (keys.KeyD && plane.x < canvas.width - plane.width) plane.x += plane.speed;
-    if (keys.KeyW && plane.y > 0) plane.y -= plane.speed;
-    if (keys.KeyS && plane.y < canvas.height - plane.height) plane.y += plane.speed;
+    // Apply acceleration based on key presses
+    if (keys.KeyA) {
+        plane.velocityX -= plane.acceleration;
+    } else if (keys.KeyD) {
+        plane.velocityX += plane.acceleration;
+    } else {
+        // Apply deceleration when no keys are pressed
+        if (plane.velocityX > 0) {
+            plane.velocityX = Math.max(0, plane.velocityX - plane.deceleration);
+        } else if (plane.velocityX < 0) {
+            plane.velocityX = Math.min(0, plane.velocityX + plane.deceleration);
+        }
+    }
+    
+    if (keys.KeyW) {
+        plane.velocityY -= plane.acceleration;
+    } else if (keys.KeyS) {
+        plane.velocityY += plane.acceleration;
+    } else {
+        // Apply deceleration when no keys are pressed
+        if (plane.velocityY > 0) {
+            plane.velocityY = Math.max(0, plane.velocityY - plane.deceleration);
+        } else if (plane.velocityY < 0) {
+            plane.velocityY = Math.min(0, plane.velocityY + plane.deceleration);
+        }
+    }
+    
+    // Limit velocity to max speed
+    plane.velocityX = Math.max(-plane.maxSpeed, Math.min(plane.maxSpeed, plane.velocityX));
+    plane.velocityY = Math.max(-plane.maxSpeed, Math.min(plane.maxSpeed, plane.velocityY));
+    
+    // Update position based on velocity
+    plane.x += plane.velocityX;
+    plane.y += plane.velocityY;
+    
+    // Keep plane within canvas bounds
+    plane.x = Math.max(0, Math.min(canvas.width - plane.width, plane.x));
+    plane.y = Math.max(0, Math.min(canvas.height - plane.height, plane.y));
+    
+    // If plane hits a boundary, stop velocity in that direction
+    if (plane.x <= 0 || plane.x >= canvas.width - plane.width) {
+        plane.velocityX = 0;
+    }
+    if (plane.y <= 0 || plane.y >= canvas.height - plane.height) {
+        plane.velocityY = 0;
+    }
     
     // Auto-shooting when space is held
     if (keys.Space) {
@@ -302,7 +349,15 @@ function updateBullets() {
 
 function updateTargets() {
     for (let i = targets.length - 1; i >= 0; i--) {
+        // Add slight horizontal movement to targets for more interesting patterns
         targets[i].y += targets[i].speed;
+        
+        // Add a slight sine wave movement to targets
+        if (targets[i].originalX === undefined) {
+            targets[i].originalX = targets[i].x;
+        }
+        targets[i].x = targets[i].originalX + Math.sin(targets[i].y * 0.02) * 20;
+        
         if (targets[i].y > canvas.height) {
             targets.splice(i, 1);
         }
@@ -402,7 +457,8 @@ function updateGameDifficulty() {
         // More aggressive speed increases
         targetSpawnRate += 0.015; // Increased from 0.01
         targetSpeed += 1.5; // Increased from 1.0
-        plane.speed += 0.4; // Increased from 0.3
+        plane.maxSpeed += 0.4; // Increased from 0.3
+        plane.acceleration += 0.1; // Increase acceleration with level
         
         // Show level up message with more visual impact
         ctx.fillStyle = '#00ffff';
@@ -859,11 +915,15 @@ function resetGame() {
     // Reset plane
     plane.x = canvas.width / 2;
     plane.y = canvas.height - 100;
+    plane.velocityX = 0;
+    plane.velocityY = 0;
     plane.health = 3;
     plane.isPoweredUp = false;
     plane.powerUpTime = 0;
     plane.isExploding = false;
     plane.explosionTime = 0;
+    plane.maxSpeed = 8;
+    plane.acceleration = 0.5;
     
     // Reset game variables
     bullets.length = 0;

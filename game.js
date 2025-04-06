@@ -373,19 +373,21 @@ function isColliding(rect1, rect2) {
 }
 
 function updateGameDifficulty() {
-    if (gameState !== 'playing') return;
-    
     gameTime++;
     
     // Increase difficulty every 30 seconds
     if (gameTime % 1800 === 0) {
         level++;
         targetSpawnRate += 0.005;
-        targetSpeed += 0.2;
+        targetSpeed += 0.5;
+        plane.speed += 0.2; // Increase player speed too
         
-        // Cap the difficulty
-        if (targetSpawnRate > 0.05) targetSpawnRate = 0.05;
-        if (targetSpeed > 5) targetSpeed = 5;
+        // Show level up message
+        ctx.fillStyle = '#00ff00';
+        ctx.font = 'bold 30px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(`Level ${level}!`, canvas.width/2, canvas.height/2);
+        ctx.textAlign = 'left';
     }
 }
 
@@ -636,35 +638,28 @@ function drawGameOver() {
     ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // Game Over text
-    ctx.fillStyle = '#ff0000';
+    // Game over text
+    ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 60px Arial';
     ctx.textAlign = 'center';
     ctx.fillText('GAME OVER', canvas.width/2, canvas.height/2 - 50);
     
     // Score text
-    ctx.fillStyle = '#ffffff';
     ctx.font = '30px Arial';
-    ctx.fillText('Your Score: ' + score, canvas.width/2, canvas.height/2 + 20);
+    ctx.fillText(`Score: ${score}`, canvas.width/2, canvas.height/2 + 20);
     
-    // Buttons
+    // Play again button
     const buttonWidth = 200;
     const buttonHeight = 50;
-    const buttonSpacing = 30;
+    const buttonX = canvas.width/2 - buttonWidth/2;
     const buttonY = canvas.height/2 + 80;
     
-    // Play Again button
     ctx.fillStyle = '#00ff00';
-    ctx.fillRect(canvas.width/2 - buttonWidth - buttonSpacing/2, buttonY, buttonWidth, buttonHeight);
+    ctx.fillRect(buttonX, buttonY, buttonWidth, buttonHeight);
+    
     ctx.fillStyle = '#000000';
     ctx.font = 'bold 24px Arial';
-    ctx.fillText('Play Again', canvas.width/2 - buttonWidth/2 - buttonSpacing/2, buttonY + 35);
-    
-    // Stop button
-    ctx.fillStyle = '#ff0000';
-    ctx.fillRect(canvas.width/2 + buttonSpacing/2, buttonY, buttonWidth, buttonHeight);
-    ctx.fillStyle = '#ffffff';
-    ctx.fillText('Stop', canvas.width/2 + buttonWidth/2 + buttonSpacing/2, buttonY + 35);
+    ctx.fillText('Play Again', canvas.width/2, buttonY + 35);
     
     // Reset text alignment
     ctx.textAlign = 'left';
@@ -690,31 +685,21 @@ function drawPauseScreen() {
 }
 
 // Handle mouse clicks for game over screen
-canvas.addEventListener('click', function(event) {
+canvas.addEventListener('click', (e) => {
     if (gameState === 'gameOver') {
         const rect = canvas.getBoundingClientRect();
-        const x = event.clientX - rect.left;
-        const y = event.clientY - rect.top;
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
         
+        // Check if click is on Play Again button
         const buttonWidth = 200;
         const buttonHeight = 50;
-        const buttonSpacing = 30;
+        const buttonX = canvas.width/2 - buttonWidth/2;
         const buttonY = canvas.height/2 + 80;
         
-        // Play Again button
-        if (x >= canvas.width/2 - buttonWidth - buttonSpacing/2 && 
-            x <= canvas.width/2 - buttonSpacing/2 && 
-            y >= buttonY && 
-            y <= buttonY + buttonHeight) {
+        if (x >= buttonX && x <= buttonX + buttonWidth &&
+            y >= buttonY && y <= buttonY + buttonHeight) {
             resetGame();
-        }
-        
-        // Stop button
-        if (x >= canvas.width/2 + buttonSpacing/2 && 
-            x <= canvas.width/2 + buttonWidth + buttonSpacing/2 && 
-            y >= buttonY && 
-            y <= buttonY + buttonHeight) {
-            // Do nothing, just stay on game over screen
         }
     }
 });

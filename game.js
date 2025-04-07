@@ -26,8 +26,8 @@ const plane = {
     powerUpTime: 0,
     isPoweredUp: false,
     bulletSpeed: 7,
-    bulletSize: 4,
-    bulletHeight: 10,
+    bulletSize: 8,
+    bulletHeight: 8,
     fireRate: 0,
     maxFireRate: 10,
     engineGlow: 0,
@@ -119,7 +119,8 @@ function shoot() {
                     width: plane.bulletSize,
                     height: plane.bulletHeight,
                     speed: plane.bulletSpeed,
-                    color: '#00ffff'
+                    color: '#00ffff',
+                    isHamburger: true
                 },
                 {
                     x: plane.x + 10,
@@ -127,7 +128,8 @@ function shoot() {
                     width: plane.bulletSize,
                     height: plane.bulletHeight,
                     speed: plane.bulletSpeed,
-                    color: '#00ffff'
+                    color: '#00ffff',
+                    isHamburger: true
                 },
                 {
                     x: plane.x + plane.width - 10,
@@ -135,7 +137,8 @@ function shoot() {
                     width: plane.bulletSize,
                     height: plane.bulletHeight,
                     speed: plane.bulletSpeed,
-                    color: '#00ffff'
+                    color: '#00ffff',
+                    isHamburger: true
                 }
             );
         } else {
@@ -146,7 +149,8 @@ function shoot() {
                 width: plane.bulletSize,
                 height: plane.bulletHeight,
                 speed: plane.bulletSpeed,
-                color: '#fff'
+                color: '#fff',
+                isHamburger: true
             });
         }
         plane.fireRate = plane.maxFireRate;
@@ -188,7 +192,8 @@ function createTarget() {
             size: size,
             color: color,
             health: health,
-            speed: speed
+            speed: speed,
+            isFood: Math.random() < 0.3 // 30% chance to be food
         });
     }
 }
@@ -402,6 +407,12 @@ function checkCollisions() {
                     } else {
                         score += 10; // Regular enemy
                     }
+                    
+                    // Bonus points for food enemies
+                    if (targets[j].isFood) {
+                        score += 5;
+                    }
+                    
                     scoreElement.textContent = score;
                     targets.splice(j, 1);
                 }
@@ -735,8 +746,54 @@ function drawPlane() {
 
 function drawBullets() {
     bullets.forEach(bullet => {
-        ctx.fillStyle = bullet.color;
-        ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+        if (bullet.isHamburger) {
+            // Draw hamburger
+            // Bottom bun
+            ctx.fillStyle = '#f4a460'; // Sandy brown
+            ctx.beginPath();
+            ctx.ellipse(bullet.x + bullet.width/2, bullet.y + bullet.height*0.8, bullet.width/2, bullet.height/4, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Patty
+            ctx.fillStyle = '#8B4513'; // Saddle brown
+            ctx.beginPath();
+            ctx.ellipse(bullet.x + bullet.width/2, bullet.y + bullet.height*0.5, bullet.width/2, bullet.height/4, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Lettuce
+            ctx.fillStyle = '#90EE90'; // Light green
+            ctx.beginPath();
+            ctx.ellipse(bullet.x + bullet.width/2, bullet.y + bullet.height*0.4, bullet.width/2, bullet.height/6, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Tomato
+            ctx.fillStyle = '#FF6347'; // Tomato red
+            ctx.beginPath();
+            ctx.ellipse(bullet.x + bullet.width/2, bullet.y + bullet.height*0.3, bullet.width/2, bullet.height/6, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Top bun
+            ctx.fillStyle = '#f4a460'; // Sandy brown
+            ctx.beginPath();
+            ctx.ellipse(bullet.x + bullet.width/2, bullet.y + bullet.height*0.2, bullet.width/2, bullet.height/4, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Add sesame seeds to top bun
+            ctx.fillStyle = '#FFFFFF';
+            for (let i = 0; i < 3; i++) {
+                ctx.beginPath();
+                ctx.arc(
+                    bullet.x + bullet.width/2 + (Math.random() - 0.5) * bullet.width/2, 
+                    bullet.y + bullet.height*0.2 + (Math.random() - 0.5) * bullet.height/4, 
+                    1, 0, Math.PI * 2
+                );
+                ctx.fill();
+            }
+        } else {
+            // Fallback to regular bullet if not a hamburger
+            ctx.fillStyle = bullet.color;
+            ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+        }
     });
 }
 
@@ -749,41 +806,72 @@ function drawTargets() {
         ctx.shadowColor = '#ff0000';
         ctx.shadowBlur = 15;
         
-        // Draw enemy body
-        ctx.fillStyle = target.color;
-        
-        // Draw a more complex shape - a hexagonal enemy with details
-        ctx.beginPath();
-        ctx.moveTo(target.x + target.size/2, target.y);
-        ctx.lineTo(target.x + target.size, target.y + target.size/3);
-        ctx.lineTo(target.x + target.size, target.y + target.size*2/3);
-        ctx.lineTo(target.x + target.size/2, target.y + target.size);
-        ctx.lineTo(target.x, target.y + target.size*2/3);
-        ctx.lineTo(target.x, target.y + target.size/3);
-        ctx.closePath();
-        ctx.fill();
-        
-        // Add inner details
-        ctx.fillStyle = '#ff3333';
-        ctx.beginPath();
-        ctx.moveTo(target.x + target.size/2, target.y + target.size/4);
-        ctx.lineTo(target.x + target.size*3/4, target.y + target.size/2);
-        ctx.lineTo(target.x + target.size/2, target.y + target.size*3/4);
-        ctx.lineTo(target.x + target.size/4, target.y + target.size/2);
-        ctx.closePath();
-        ctx.fill();
-        
-        // Add "eye" in the center
-        ctx.fillStyle = '#ffff00';
-        ctx.beginPath();
-        ctx.arc(target.x + target.size/2, target.y + target.size/2, target.size/6, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Add pupil
-        ctx.fillStyle = '#000000';
-        ctx.beginPath();
-        ctx.arc(target.x + target.size/2, target.y + target.size/2, target.size/12, 0, Math.PI * 2);
-        ctx.fill();
+        if (target.isFood) {
+            // Draw food enemy
+            ctx.fillStyle = target.color;
+            
+            // Draw a pizza slice
+            ctx.beginPath();
+            ctx.moveTo(target.x + target.size/2, target.y + target.size/2);
+            ctx.lineTo(target.x + target.size, target.y);
+            ctx.lineTo(target.x + target.size, target.y + target.size);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Add toppings
+            ctx.fillStyle = '#FF6347'; // Tomato red for pepperoni
+            for (let i = 0; i < 3; i++) {
+                ctx.beginPath();
+                ctx.arc(
+                    target.x + target.size/2 + (Math.random() - 0.5) * target.size/2, 
+                    target.y + target.size/2 + (Math.random() - 0.5) * target.size/2, 
+                    target.size/8, 0, Math.PI * 2
+                );
+                ctx.fill();
+            }
+            
+            // Add cheese texture
+            ctx.fillStyle = '#FFD700'; // Gold for cheese
+            ctx.beginPath();
+            ctx.arc(target.x + target.size/2, target.y + target.size/2, target.size/4, 0, Math.PI * 2);
+            ctx.fill();
+        } else {
+            // Draw regular enemy
+            ctx.fillStyle = target.color;
+            
+            // Draw a more complex shape - a hexagonal enemy with details
+            ctx.beginPath();
+            ctx.moveTo(target.x + target.size/2, target.y);
+            ctx.lineTo(target.x + target.size, target.y + target.size/3);
+            ctx.lineTo(target.x + target.size, target.y + target.size*2/3);
+            ctx.lineTo(target.x + target.size/2, target.y + target.size);
+            ctx.lineTo(target.x, target.y + target.size*2/3);
+            ctx.lineTo(target.x, target.y + target.size/3);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Add inner details
+            ctx.fillStyle = '#ff3333';
+            ctx.beginPath();
+            ctx.moveTo(target.x + target.size/2, target.y + target.size/4);
+            ctx.lineTo(target.x + target.size*3/4, target.y + target.size/2);
+            ctx.lineTo(target.x + target.size/2, target.y + target.size*3/4);
+            ctx.lineTo(target.x + target.size/4, target.y + target.size/2);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Add "eye" in the center
+            ctx.fillStyle = '#ffff00';
+            ctx.beginPath();
+            ctx.arc(target.x + target.size/2, target.y + target.size/2, target.size/6, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Add pupil
+            ctx.fillStyle = '#000000';
+            ctx.beginPath();
+            ctx.arc(target.x + target.size/2, target.y + target.size/2, target.size/12, 0, Math.PI * 2);
+            ctx.fill();
+        }
         
         ctx.restore();
     });
